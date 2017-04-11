@@ -1,58 +1,69 @@
 #!/usr/bin/env python
-# 
+#
 # tournament.py -- implementation of a Swiss-system tournament
 #
 
 import psycopg2
 
-def connect():
+
+def connect(database_name = "tournament"):
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
+    # return psycopg2.connect("dbname=tournament")
+    params = (database_name,)
+    try:
+        db = psycopg2.connect("dbname=%s", params)
+        cursor = db.cursor()
+        return db, cursor   
+    except:
+        print("Error connecting to the database %s", params)
+
 
 def deleteMatches():
     """Remove all the match records from the database."""
-    db = connect()
-    cursor = db.cursor()
-    cursor.execute("delete from matches")
+    db, cursor = connect()
+    cursor.execute("truncate table matches")
     db.commit()
     db.close()
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    db = connect()
-    cursor = db.cursor()
-    cursor.execute("delete from players cascade") # Also deletes the matches related to the player being deleted.
+    db, cursor = connect()
+    # Also deletes the matches related to the player being deleted.
+    cursor.execute("truncate table players cascade")
     db.commit()
     db.close()
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
-    db = connect()
-    cursor = db.cursor()
+    db, cursor = connect()
     cursor.execute("select count(id) as pcount from players")
-    player_count = cursor.fetchone() #Returns a tuple
+    player_count = cursor.fetchone()  # Returns a tuple
     db.close()
     if player_count:
-        return player_count[0] #Returns the first value in the tuple if not null 
+        # Returns the first value in the tuple if not null
+        return player_count[0]
     else:
         return 0
 
+
 def registerPlayer(name):
     """Adds a player to the tournament database.
-  
+
     The database assigns a unique serial id number for the player.  (This
     should be handled by your SQL database schema, not in your Python code.)
-  
+
     Args:
       name: the player's full name (need not be unique).
     """
-    db = connect()
-    cursor = db.cursor()
-    cursor.execute("insert into players (name) values (%s)", (name,)) #Inserts the player into the database
+    db, cursor = connect()
+    params = (name,)
+    # Inserts the player into the database
+    cursor.execute("insert into players (name) values (%s)", params)
     db.commit()
     db.close()
+
 
 def playerStandings():
     """Returns a list of the players and their win records, sorted by wins.
@@ -74,6 +85,7 @@ def playerStandings():
     db.close()
     return playerStandings
 
+
 def reportMatch(winner, loser):
     """Records the outcome of a single match between two players.
 
@@ -83,19 +95,21 @@ def reportMatch(winner, loser):
     """
     db = connect()
     cursor = db.cursor()
-    cursor.execute("insert into matches (winner, loser) values (%s, %s)", (winner, loser))
+    params = (winner, loser)
+    cursor.execute(
+        "insert into matches (winner, loser) values (%s, %s)", params)
     db.commit()
     db.close()
- 
- 
+
+
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
-  
+
     Assuming that there are an even number of players registered, each player
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
-  
+
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
         id1: the first player's unique id
@@ -106,9 +120,8 @@ def swissPairings():
     pairs = []
     standings = playerStandings()
     for s in range(1, len(standings), 2):
-        #Since the list is sorted by wins, the two consecutive players are paired.
-        pairs.append((standings[s-1][0], standings[s-1][1], standings[s][0], standings[s][1])) 
+        # Since the list is sorted by wins, the two consecutive players are
+        # paired.
+        pairs.append((standings[s - 1][0], standings[s - 1]
+                      [1], standings[s][0], standings[s][1]))
     return pairs
-
-
-

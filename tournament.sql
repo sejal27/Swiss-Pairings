@@ -8,7 +8,8 @@
 
 drop database tournament; -- Drop any previous db that existed
 create database tournament; -- Dreate a new tournament database
-\c tournament; -- Connect to the database
+-- Connect to the database
+\c tournament; 
 create table players (id serial primary key, name text); -- Create players table with primary key as player id, of type serial
 create table matches (id serial primary key, -- create matches table containing player ids as foriegn keys for winner and loser
     winner integer references players (id), 
