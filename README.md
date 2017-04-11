@@ -19,9 +19,10 @@ You may want to install Vagrant and Virtual-Box for running some of these files.
 ## How to Use
 1. Download all the files in the same folder, say 'tournament'.
 2. Store your tournment folder under your Vagrant shared files. 
-3. On your terminal, run the following:
+3. On your terminal, run the following to setup your database:
   `vagrant ssh`
   `cd ../../vagrant/tournament` (change the path according to where you have stored your tournament directory)
+  `psql -f tournament.sql`
   `python tournament_test.py`
 4. To view the db schema, you can run `psql tournament`
 
